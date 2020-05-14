@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="https://static.tildacdn.com/tild3339-3137-4033-b932-306437613032/favicon_4.ico" type="image/x-icon" />
+    <title>BestDoctor ♥ Opensource</title>
+    <style>
+      li {
+        line-height: 25px !important;
+      }
+      ul {
+        margin-top: 5px !important;
+      }
+
+      .repo_link > svg {
+        height: 20px;
+        width: 20px;
+        padding-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.css">
+      <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+
+      <div class="ui grid centered">
+        <div class="eight wide column">
+          <h1>BestDoctor ♥ Opensource</h1>
+          <p>This is a list of opensource projects, created by BestDoctor tech team with their current statuses.</p>
+          <div class="ui segment">
+            <div class="ui three statistics">
+              <div class="statistic green">
+                <div class="value green">
+                  {{ context['total']['ok_repos_number'] }}
+                </div>
+                <div class="label">
+                  Ok repos
+                </div>
+              </div>
+              <div class="statistic yellow">
+                <div class="value">
+                  {{ context['total']['repos_with_warnings_number'] }}
+                </div>
+                <div class="label yellow">
+                  Repos with warnings
+                </div>
+              </div>
+              <div class="statistic red">
+                <div class="value">
+                  {{ context['total']['critical_repos_number'] }}
+                </div>
+                <div class="label red">
+                  Repos with critical errors
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ui basic segment repos-info">
+            <div class="ui right rail">
+              <div class="ui segment sticky">
+                We are hiring:
+                <ul class="ui list bulleted">
+                  {% for vacancy in context['actual_vacancies'] %}
+                    <li><a href="{{ vacancy['alternate_url'] }}" target="_blank">{{ vacancy['name'] }}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            {% for repo_name, repo_info in context['repos'] %}
+              <h3 class="ui header {{ context['severity_colors'][repo_info['status']] }}">
+                {{ repo_name }}
+                <a class="repo_link" href="https://github.com/{{ context['owner'] }}/{{ repo_name }}" target="_blank">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path d="M14 0C6.27 0 0 6.43 0 14.36c0 6.34 4.01 11.72 9.57 13.62.7.13.96-.31.96-.69 0-.34-.01-1.24-.02-2.44-3.89.87-4.72-1.92-4.72-1.92-.64-1.66-1.55-2.1-1.55-2.1-1.27-.89.1-.87.1-.87 1.4.1 2.14 1.48 2.14 1.48 1.25 2.19 3.28 1.56 4.07 1.19.13-.93.49-1.56.89-1.92-3.11-.36-6.38-1.59-6.38-7.09 0-1.57.55-2.85 1.44-3.85-.14-.36-.62-1.82.14-3.8 0 0 1.18-.39 3.85 1.47a12.8 12.8 0 013.5-.48c1.19.01 2.39.16 3.5.48 2.67-1.86 3.85-1.47 3.85-1.47.76 1.98.28 3.44.14 3.8.9 1 1.44 2.28 1.44 3.85 0 5.51-3.27 6.73-6.39 7.08.5.44.95 1.32.95 2.66 0 1.92-.02 3.47-.02 3.94 0 .38.25.83.96.69C23.99 26.07 28 20.7 28 14.36 28 6.43 21.73 0 14 0z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                </a>
+              </h3>
+              {% if repo_info['badges'] %}
+                <p>
+                  {% for badge_url in repo_info['badges'] %}
+                    <img src="{{ badge_url }}"/>
+                  {% endfor %}
+                </p>
+              {% endif %}
+              {% if repo_info['description'] %}
+                <p>{{ repo_info['description'] }}</p>
+              {% endif %}
+              {% if repo_info['downloads_last_week'] %}
+                <p>Downloads this week: {{ repo_info['downloads_last_week'] }}</p>
+              {% endif %}
+              {% if repo_info['errors'] %}
+              Errors:
+              <ul class="ui list bulleted">
+                {% for error_slug, error, severity in repo_info['errors'] %}
+                  <li class="item red">
+                    {{ error }}
+                    {% if severity == 'critical' %}<div class="ui left pointing red basic label">critical</div>{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+              <div class="ui divider"></div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      $('.ui.sticky')
+        .sticky({context: '.repos-info'});
+    </script>
+  </body>
+</html>
