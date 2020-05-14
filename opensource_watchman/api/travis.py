@@ -54,7 +54,7 @@ class TravisRepoAPI(NamedTuple):
         return self._extract_commands_from_raw_log(raw_log)
 
     @staticmethod  # noqa: C901
-    def _extract_commands_from_raw_log(raw_log):
+    def _extract_commands_from_raw_log(raw_log):  # noqa: C901
         commands_with_subcommands = [
             # those commands have subcommands that are logged as stdout,
             # those commands should be extracted too
