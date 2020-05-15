@@ -58,17 +58,7 @@
           </div>
 
           <div class="ui basic segment repos-info">
-            <div class="ui right rail">
-              <div class="ui segment sticky">
-                We are hiring:
-                <ul class="ui list bulleted">
-                  {% for vacancy in actual_vacancies %}
-                    <li><a href="{{ vacancy['alternate_url'] }}" target="_blank">{{ vacancy['name'] }}</a></li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-
+            {% block pre_repos_details %}{% endblock %}
             {% for repo_info in repos %}
               <h3 class="ui header {{ severity_colors[repo_info.status] }}">
                 {{ repo_info.repo_name }}

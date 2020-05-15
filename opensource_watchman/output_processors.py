@@ -1,8 +1,9 @@
 import importlib
+import os
 from typing import Any, Mapping, List
 
 from colored import fg, attr
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 
 from opensource_watchman.pipelines.extended_repo_info import fetch_downloads_stat
 from opensource_watchman.common_types import RepoResult
@@ -56,12 +57,30 @@ def get_total_stat(repos_stat):
 
 def render_html_report(
     context: Mapping[str, Any],
-    template_file_name: str,
+    template_file_path: str,
     result_file: str,
 ) -> None:
-    with open(template_file_name, 'r') as file_handler:
-        template = file_handler.read()
-    rendered_template = Template(template).render(**context)
+    templates_pathes = [
+        os.path.dirname(os.path.dirname(__file__)),
+        os.path.join(os.path.dirname(__file__), 'templates'),
+    ]
+    template_name = template_file_path
+    if template_file_path.startswith(os.path.sep):
+        templates_pathes.insert(0, os.path.dirname(template_file_path))
+        template_name = os.path.basename(template_file_path)
+    elif os.path.sep in template_file_path:
+        templates_pathes.insert(
+            0,
+            os.path.join(os.path.abspath(os.getcwd()), os.path.dirname(template_file_path)),
+        )
+        template_name = os.path.basename(template_file_path)
+
+    env = Environment(
+        loader=FileSystemLoader(templates_pathes),
+    )
+    template = env.get_template(template_name)
+    rendered_template = template.render(**context)
+
     with open(result_file, 'w') as file_handler:
         file_handler.write(rendered_template)
 
