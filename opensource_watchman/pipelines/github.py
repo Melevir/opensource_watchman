@@ -1,7 +1,11 @@
 import configparser
 import datetime
+import io
 import operator
+import re
 
+from PIL import Image, UnidentifiedImageError
+from requests import get
 from super_mario import BasePipeline, input_pipe, process_pipe
 
 from opensource_watchman.api.github import GithubRepoAPI
@@ -20,6 +24,7 @@ class GithubReceiveDataPipeline(BasePipeline):
         'fetch_pull_request_details',
         'get_project_description',
         'get_repo_config',
+        'get_badges_urls',
     ]
     @process_pipe
     @staticmethod
@@ -124,3 +129,21 @@ class GithubReceiveDataPipeline(BasePipeline):
             parser.read_string(config_file_content)
             config = dict(parser[config_section_name]) if config_section_name in parser else {}
         return {'ow_repo_config': config}
+
+    @input_pipe
+    @staticmethod
+    def get_badges_urls(readme_content):
+        image_urls = re.findall(r'(?:!\[.*?\]\((.*?)\))', readme_content)
+        max_badge_height = 60
+        badges_urls = []
+        for url in image_urls:
+            img_data = get(url).content
+            try:
+                im = Image.open(io.BytesIO(img_data))
+            except UnidentifiedImageError:  # this happens with svg, should parse it and get height
+                badges_urls.append(url)
+                continue
+            height = im.size[1]
+            if height < max_badge_height:
+                badges_urls.append(url)
+        return {'badges_urls': badges_urls}

@@ -1,18 +1,19 @@
+import json
 import logging
 import operator
 import os
 from typing import Optional, List
 
 from click import command, option, argument, Choice
-from colored import fg, attr
 
 from opensource_watchman.common_types import RepoResult, OpensourceWatchmanConfig
+from opensource_watchman.config import DEFAULT_HTML_REPORT_FILE_NAME
+from opensource_watchman.output_processors import print_errors_data, prepare_html_report
 from opensource_watchman.pipelines.github import GithubReceiveDataPipeline
 from opensource_watchman.pipelines.travis import TravisReceiveDataPipeline
 from opensource_watchman.pipelines.master import MasterPipeline
 from opensource_watchman.prerequisites import python_only, rus_only
 from opensource_watchman.api.github import GithubRepoAPI
-from opensource_watchman.config import ERRORS_SEVERITY, SEVERITY_COLORS
 
 
 logger = logging.getLogger('super_mario')
@@ -120,35 +121,39 @@ def run_watchman(
         )
 
         errors_info = {c: e for (c, e) in pipeline.__context__.items() if len(c) == 3 and e}
-        repos_info.append({
-            'owner': owner,
-            'repo_name': repo_to_process,
-            'errors': errors_info,
-        })
+        repos_info.append(RepoResult(
+            owner=owner,
+            package_name=pipeline.__context__['package_name'],
+            description=github_pipeline.__context__['project_description'],
+            badges_urls=github_pipeline.__context__['badges_urls'],
+            repo_name=repo_to_process,
+            errors=errors_info,
+        ))
     return repos_info
 
 
 def process_results(
+    owner: str,
     repos_stat: List[RepoResult],
     output_type: str,
     html_template_path: Optional[str],
     extra_context_provider_py_name: Optional[str],
     result_filename: Optional[str],
+    config,
 ):
-    ok_repos_number = 0
-    for repo_stat in repos_stat:
-        print(repo_stat['repo_name'])  # noqa: T001
-        for error_slug, error_texts in sorted(repo_stat['errors'].items()):
-            error_color = SEVERITY_COLORS[ERRORS_SEVERITY[error_slug]]
-            for error_text in error_texts:
-                print(f'\t{error_color}{error_slug}: {error_text}{attr(0)}')  # noqa: T001
-        if not repo_stat['errors']:
-            ok_repos_number += 1
-            print(f'\t{fg(2)}ok{attr(0)}')  # noqa: T001
-    ok_repos_percent = ok_repos_number / len(repos_stat) * 100
-    print(  # noqa: T001
-        f'{ok_repos_percent:.2f}% of all repos are ok ({ok_repos_number} of {len(repos_stat)})',
-    )
+    if output_type == 'term':
+        print_errors_data(repos_stat)
+    elif output_type == 'json':
+        print(json.dumps(repos_stat))  # noqa: T001
+    elif output_type == 'html':
+        prepare_html_report(
+            owner=owner,
+            repos_stat=repos_stat,
+            html_template_path=html_template_path,
+            extra_context_provider_py_name=extra_context_provider_py_name,
+            result_filename=result_filename or DEFAULT_HTML_REPORT_FILE_NAME,
+            config=config,
+        )
 
 
 @command()
@@ -177,12 +182,20 @@ def main(
     """Run opensource watchman"""
     config = load_config()
     repos_stat = run_watchman(owner, repo_name, exclude_list, config)
+    default_template_path = os.path.join(
+        os.path.dirname(__file__),
+        'templates',
+        'report_template.html',
+    )
+    html_template_path = html_template_path or default_template_path
     process_results(
+        owner,
         repos_stat,
         output_type,
         html_template_path,
         extra_context_provider_py_name,
         result_filename,
+        config,
     )
 
 

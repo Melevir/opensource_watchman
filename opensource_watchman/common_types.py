@@ -1,5 +1,7 @@
-from typing import NamedTuple, List, Mapping
+from typing import NamedTuple, List, Mapping, Dict, Optional
 import enum
+
+from opensource_watchman.config import ERRORS_SEVERITY
 
 
 class RepoStatus(enum.Enum):
@@ -10,9 +12,24 @@ class RepoStatus(enum.Enum):
 
 class RepoResult(NamedTuple):
     owner: str
-    name: str
-    status: RepoStatus
-    violations_ids: List[str]
+    package_name: Optional[str]
+    description: Optional[str]
+    badges_urls: List[str]
+    repo_name: str
+    errors: Dict[str, List[str]]
+
+    @property
+    def status(self):
+        if not self.errors:
+            return 'ok'
+        severities = {ERRORS_SEVERITY[e] for e in self. errors.keys()}
+        return 'critical' if 'critical' in severities else 'warning'
+
+    @property
+    def iterate_errors_with_severities(self):
+        for error_slug, errors in self.errors.items():
+            for error in errors:
+                yield error_slug, error, ERRORS_SEVERITY[error_slug]
 
 
 class OpensourceWatchmanConfig(NamedTuple):

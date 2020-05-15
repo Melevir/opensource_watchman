@@ -24,3 +24,5 @@ SEVERITY_COLORS = {
     'warning': fg(3),
     'critical': fg(1),
 }
+
+DEFAULT_HTML_REPORT_FILE_NAME = 'report.html'

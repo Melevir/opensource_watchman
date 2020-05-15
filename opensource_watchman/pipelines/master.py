@@ -334,8 +334,8 @@ class MasterPipeline(BasePipeline):
                 if comments
                 else None
             )
-            if last_comment and last_comment['update_at'] > updated_at:
-                updated_at = last_comment['update_at']
+            if last_comment and last_comment['updated_at'] > updated_at:
+                updated_at = last_comment['updated_at']
             pull_requests_updated_at[pr_number] = datetime.datetime.fromisoformat(updated_at[:-1])
         return {'pull_requests_updated_at': pull_requests_updated_at}
 

@@ -188,3 +188,4 @@ yum-root-*
 per_function_coverage.xlsx
 dmypy.txt
 src_mvp/report.html
+report.html
