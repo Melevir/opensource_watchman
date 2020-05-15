@@ -1,3 +1,4 @@
+import importlib
 from typing import Any, Mapping, List
 
 from colored import fg, attr
@@ -39,6 +40,7 @@ def prepare_html_report(
         'severity_colors': {'ok': 'green', 'warning': 'yellow', 'critical': 'red'},
         'downloads_last_week_stat': fetch_downloads_stat(repos_stat),
         **get_total_stat(repos_stat),
+        **get_extra_context_from_provider(extra_context_provider_py_name),
     }
     render_html_report(context, html_template_path, result_filename)
 
@@ -62,3 +64,13 @@ def render_html_report(
     rendered_template = Template(template).render(**context)
     with open(result_file, 'w') as file_handler:
         file_handler.write(rendered_template)
+
+
+def get_extra_context_from_provider(extra_context_provider_py_name: str):
+    if not extra_context_provider_py_name:
+        return {}
+    module_to_import = '.'.join(extra_context_provider_py_name.split('.')[:-1])
+    module = importlib.import_module(module_to_import)
+    callable_name = extra_context_provider_py_name.split('.')[-1]
+    result = getattr(module, callable_name)()
+    return result or {}
