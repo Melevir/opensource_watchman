@@ -13,12 +13,12 @@ from opensource_watchman.config import SEVERITY_COLORS, ERRORS_SEVERITY
 def print_errors_data(repos_stat):
     ok_repos_number = 0
     for repo_stat in repos_stat:
-        print(repo_stat['repo_name'])  # noqa: T001
-        for error_slug, error_texts in sorted(repo_stat['errors'].items()):
+        print(repo_stat.repo_name)  # noqa: T001
+        for error_slug, error_texts in sorted(repo_stat.errors.items()):
             error_color = SEVERITY_COLORS[ERRORS_SEVERITY[error_slug]]
             for error_text in error_texts:
                 print(f'\t{error_color}{error_slug}: {error_text}{attr(0)}')  # noqa: T001
-        if not repo_stat['errors']:
+        if not repo_stat.errors:
             ok_repos_number += 1
             print(f'\t{fg(2)}ok{attr(0)}')  # noqa: T001
     ok_repos_percent = ok_repos_number / len(repos_stat) * 100
@@ -64,6 +64,8 @@ def render_html_report(
         os.path.dirname(os.path.dirname(__file__)),
         os.path.join(os.path.dirname(__file__), 'templates'),
     ]
+    print(templates_pathes)
+    print(__file__)
     template_name = template_file_path
     if template_file_path.startswith(os.path.sep):
         templates_pathes.insert(0, os.path.dirname(template_file_path))
