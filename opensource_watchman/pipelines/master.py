@@ -74,9 +74,9 @@ class MasterPipeline(BasePipeline):
 
     @process_pipe
     @staticmethod
-    def is_ci_bild_status_ok(travis_data):
+    def is_ci_bild_status_ok(travis_data, C01):
         errors = []
-        if not travis_data['last_build'] or travis_data['last_build']['state'] != 'passed':
+        if not C01 and travis_data['last_build'] and travis_data['last_build']['state'] != 'passed':
             errors = [f'Current build status on Travis is not ok']
         return {'C02': errors}
 
@@ -112,12 +112,12 @@ class MasterPipeline(BasePipeline):
 
     @process_pipe
     @staticmethod
-    def has_ci_weekly_build_enabled(travis_data):
+    def has_ci_weekly_build_enabled(travis_data, C01):
         errors = ['Travis weekly cron build is not enabled']
         for crontab in travis_data['crontabs_info']:
             if crontab['interval'] == 'weekly':
                 errors = []
-        return {'C05': errors}
+        return {'C05': errors if not C01 else []}
 
     @process_pipe
     @staticmethod
