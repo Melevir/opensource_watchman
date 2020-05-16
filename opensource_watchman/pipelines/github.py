@@ -1,15 +1,13 @@
 import configparser
 import datetime
-import io
 import operator
 import re
 
-from PIL import Image, UnidentifiedImageError
-from requests import get
-from requests.exceptions import MissingSchema
+from PIL import UnidentifiedImageError
 from super_mario import BasePipeline, input_pipe, process_pipe
 
 from opensource_watchman.api.github import GithubRepoAPI
+from opensource_watchman.utils.images import get_image_height_in_pixels
 
 
 class GithubReceiveDataPipeline(BasePipeline):
@@ -140,16 +138,12 @@ class GithubReceiveDataPipeline(BasePipeline):
         max_badge_height = 60
         badges_urls = []
         for url in image_urls:
+            height = None
             try:
-                img_data = get(url).content
-            except MissingSchema:
-                continue
-            try:
-                im = Image.open(io.BytesIO(img_data))
+                height = get_image_height_in_pixels(url)
             except UnidentifiedImageError:  # this happens with svg, should parse it and get height
                 badges_urls.append(url)
                 continue
-            height = im.size[1]
-            if height < max_badge_height:
+            if height and height < max_badge_height:
                 badges_urls.append(url)
         return {'badges_urls': badges_urls}

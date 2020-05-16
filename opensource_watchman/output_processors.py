@@ -1,6 +1,6 @@
 import importlib
 import os
-from typing import Any, Mapping, List
+from typing import Any, Mapping, List, Optional
 
 from colored import fg, attr
 from jinja2 import Environment, FileSystemLoader
@@ -31,7 +31,7 @@ def prepare_html_report(
     owner: str,
     repos_stat: List[RepoResult],
     html_template_path: str,
-    extra_context_provider_py_name: str,
+    extra_context_provider_py_name: Optional[str],
     result_filename: str,
     config,
 ) -> None:
@@ -85,7 +85,7 @@ def render_html_report(
         file_handler.write(rendered_template)
 
 
-def get_extra_context_from_provider(extra_context_provider_py_name: str):
+def get_extra_context_from_provider(extra_context_provider_py_name: Optional[str]):
     if not extra_context_provider_py_name:
         return {}
     module_to_import = '.'.join(extra_context_provider_py_name.split('.')[:-1])

@@ -27,9 +27,9 @@ def load_config() -> OpensourceWatchmanConfig:
         readme_file_name='README.md',
         ci_config_file_name='.travis.yml',
         package_name_path='setup.py:package_name',
-        github_login=os.environ.get('GITHUB_USERNAME'),
-        github_api_token=os.environ.get('GITHUB_API_TOKEN'),
-        travis_api_login=os.environ.get('TRAVIS_CI_ORG_ACCESS_TOKEN'),
+        github_login=os.environ['GITHUB_USERNAME'],
+        github_api_token=os.environ['GITHUB_API_TOKEN'],
+        travis_api_login=os.environ['TRAVIS_CI_ORG_ACCESS_TOKEN'],
         required_readme_sections=[
             ['installation'],
             ['contributing', 'contribution'],
@@ -45,7 +45,7 @@ def load_config() -> OpensourceWatchmanConfig:
         ],
         required_python_versions=['3.7', '3.8'],
         max_age_of_last_commit_in_months=6,
-        code_climate_api_token=os.environ.get('CODECLIMATE_API_TOKEN'),
+        code_climate_api_token=os.environ['CODECLIMATE_API_TOKEN'],
         min_test_coverage_percents=80,
         min_number_of_actual_issues=3,
         max_issue_update_age_months=6,
@@ -145,7 +145,7 @@ def process_results(
         print_errors_data(repos_stat)
     elif output_type == 'json':
         print(json.dumps(repos_stat))  # noqa: T001
-    elif output_type == 'html':
+    elif output_type == 'html' and html_template_path:
         prepare_html_report(
             owner=owner,
             repos_stat=repos_stat,
