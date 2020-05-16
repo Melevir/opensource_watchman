@@ -64,8 +64,6 @@ def render_html_report(
         os.path.dirname(os.path.dirname(__file__)),
         os.path.join(os.path.dirname(__file__), 'templates'),
     ]
-    print(templates_pathes)
-    print(__file__)
     template_name = template_file_path
     if template_file_path.startswith(os.path.sep):
         templates_pathes.insert(0, os.path.dirname(template_file_path))

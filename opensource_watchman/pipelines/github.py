@@ -6,6 +6,7 @@ import re
 
 from PIL import Image, UnidentifiedImageError
 from requests import get
+from requests.exceptions import MissingSchema
 from super_mario import BasePipeline, input_pipe, process_pipe
 
 from opensource_watchman.api.github import GithubRepoAPI
@@ -133,11 +134,16 @@ class GithubReceiveDataPipeline(BasePipeline):
     @input_pipe
     @staticmethod
     def get_badges_urls(readme_content):
+        if not readme_content:
+            return {'badges_urls': []}
         image_urls = re.findall(r'(?:!\[.*?\]\((.*?)\))', readme_content)
         max_badge_height = 60
         badges_urls = []
         for url in image_urls:
-            img_data = get(url).content
+            try:
+                img_data = get(url).content
+            except MissingSchema:
+                continue
             try:
                 im = Image.open(io.BytesIO(img_data))
             except UnidentifiedImageError:  # this happens with svg, should parse it and get height
