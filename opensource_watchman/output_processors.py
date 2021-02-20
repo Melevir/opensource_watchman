@@ -10,7 +10,7 @@ from opensource_watchman.common_types import RepoResult
 from opensource_watchman.config import SEVERITY_COLORS, ERRORS_SEVERITY
 
 
-def print_errors_data(repos_stat):
+def print_errors_data(repos_stat: List[RepoResult]) -> None:
     ok_repos_number = 0
     for repo_stat in repos_stat:
         print(repo_stat.repo_name)  # noqa: T001

@@ -1,5 +1,6 @@
 from typing import Optional, NamedTuple
 
+import deal
 from requests import get
 
 
@@ -10,7 +11,8 @@ class CodeClimateAPI(NamedTuple):
     code_climate_repo_id: Optional[str]
 
     @staticmethod
-    def create(owner, repo_name, api_token):
+    @deal.has('network')
+    def create(owner: str, repo_name: str, api_token: str) -> 'CodeClimateAPI':
         return CodeClimateAPI(
             owner,
             repo_name,
