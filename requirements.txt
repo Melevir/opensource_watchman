@@ -5,6 +5,7 @@ pillow==7.1.2
 colored==1.4.2
 git+https://github.com/best-doctor/Mario.git@c4dd8df6b47fd29b85ee84418cb64cf88781e8d9
 deal==4.5.0
+responses==0.12.1
 
 pydocstyle==3.0.0
 flake8==3.7.9
