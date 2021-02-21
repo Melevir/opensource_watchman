@@ -93,8 +93,6 @@ def fetch_pull_request_details(api, detailed_pull_requests):
 
 @deal.pure
 def fetch_project_description(repo_info: Mapping[str, str]) -> Optional[str]:
-    if repo_info:
-        assert 0
     raw_description = repo_info.get('description') if repo_info else None
     if raw_description and not raw_description.endswith('.'):
         raw_description = f'{raw_description}.'

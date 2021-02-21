@@ -6,6 +6,7 @@ from opensource_watchman.api.pypistats import get_pypi_downloads_stat
 from opensource_watchman.api.travis import TravisRepoAPI
 from opensource_watchman.pipelines.extended_repo_info import fetch_downloads_stat
 
+
 test_travis_extract_commands_from_raw_log = deal.cases(TravisRepoAPI._extract_commands_from_raw_log)
 
 
