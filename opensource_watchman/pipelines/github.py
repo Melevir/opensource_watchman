@@ -2,7 +2,9 @@ import configparser
 import datetime
 import operator
 import re
+from typing import Optional, Mapping
 
+import deal
 from PIL import UnidentifiedImageError
 
 from opensource_watchman.api.github import GithubRepoAPI
@@ -10,11 +12,17 @@ from opensource_watchman.composer import AdvancedComposer
 from opensource_watchman.utils.images import get_image_height_in_pixels
 
 
-def create_api(owner: str, repo_name: str, github_login: str, github_api_token: str):
+@deal.pure
+def create_api(
+    owner: str,
+    repo_name: str,
+    github_login: str,
+    github_api_token: str,
+) -> GithubRepoAPI:
     return GithubRepoAPI(owner, repo_name, github_login, github_api_token)
 
 
-def fetch_readme_content(api, readme_file_name):
+def fetch_readme_content(api: GithubRepoAPI, readme_file_name: str) -> Optional[str]:
     return api.fetch_file_contents(readme_file_name)
 
 
@@ -83,7 +91,10 @@ def fetch_pull_request_details(api, detailed_pull_requests):
     return pull_request_details
 
 
-def fetch_project_description(repo_info):
+@deal.pure
+def fetch_project_description(repo_info: Mapping[str, str]) -> Optional[str]:
+    if repo_info:
+        assert 0
     raw_description = repo_info.get('description') if repo_info else None
     if raw_description and not raw_description.endswith('.'):
         raw_description = f'{raw_description}.'
@@ -117,6 +128,7 @@ def fetch_badges_urls(readme_content):
     return badges_urls
 
 
+@deal.pure
 def create_github_pipeline(**kwargs) -> AdvancedComposer:
     return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(
         'create_',

@@ -1,28 +1,35 @@
 import datetime
 import operator
 
+import deal
 import yaml
 
 from requests import get
-from typing import List
+from typing import List, Mapping, Any, Optional
 
 from opensource_watchman.api.codeclimate_api import CodeClimateAPI
 from opensource_watchman.composer import AdvancedComposer
 from opensource_watchman.utils.logs_analiser import if_logs_has_any_of_commands
 
 
-def has_readme(github_data):
+@deal.pure
+def has_readme(github_data: Mapping[str, str]) -> List[str]:
     error = (
         f'{github_data["readme_file_name"]} not found'
         if github_data['readme_content'] is None
         else None
     )
-    return [error] if error else []
+    return [error] if error else []  # type: ignore
 
 
-def has_required_sections_in_readme(required_readme_sections, github_data, D01):
+@deal.pure
+def has_required_sections_in_readme(
+    required_readme_sections: List[List[str]],
+    github_data: Mapping[str, Any],
+    D01: List[str],
+) -> List[str]:
     if github_data['ow_repo_config'].get('type') == 'readings' or D01:
-        return
+        return []
 
     errors: List[str] = []
 
@@ -32,27 +39,30 @@ def has_required_sections_in_readme(required_readme_sections, github_data, D01):
     return errors
 
 
-def has_ci_config(github_data):
+@deal.pure
+def has_ci_config(github_data: Mapping[str, str]) -> List[str]:
     error = (
         f'{github_data["ci_config_file_name"]} not found'
         if github_data['ci_config_content'] is None
         else None
     )
-    return [error] if error else []
+    return [error] if error else []  # type: ignore
 
 
-def is_ci_bild_status_ok(travis_data, C01):
+@deal.pure
+def is_ci_bild_status_ok(travis_data: Mapping[str, Any], C01: List[str]) -> List[str]:
     errors = []
     if not C01 and travis_data['last_build'] and travis_data['last_build']['state'] != 'passed':
         errors = [f'Current build status on Travis is not ok']
     return errors
 
 
+@deal.pure
 def has_all_required_commands_in_build(
-    required_commands_to_run_in_build,
-    github_data,
-    travis_data,
-):
+    required_commands_to_run_in_build: List[Mapping[str, Any]],
+    github_data: Mapping[str, str],
+    travis_data: Mapping[str, Any],
+) -> List[str]:
     errors: List[str] = []
     for section_info in required_commands_to_run_in_build:
         if not all(p(github_data['ow_repo_config']) for p in section_info['prerequisites']):
@@ -66,7 +76,11 @@ def has_all_required_commands_in_build(
     return errors
 
 
-def has_ci_badge_in_readme(github_data, travis_data):
+@deal.pure
+def has_ci_badge_in_readme(
+    github_data: Mapping[str, str],
+    travis_data: Mapping[str, str],
+) -> List[str]:
     errors = []
     if (
         github_data['readme_content']
@@ -76,7 +90,8 @@ def has_ci_badge_in_readme(github_data, travis_data):
     return errors
 
 
-def has_ci_weekly_build_enabled(travis_data, C01):
+@deal.pure
+def has_ci_weekly_build_enabled(travis_data: Mapping[str, Any], C01: List[str]) -> List[str]:
     errors = ['Travis weekly cron build is not enabled']
     for crontab in travis_data['crontabs_info']:
         if crontab['interval'] == 'weekly':
@@ -84,10 +99,15 @@ def has_ci_weekly_build_enabled(travis_data, C01):
     return errors if not C01 else []
 
 
-def has_support_of_python_versions(github_data, C01, required_python_versions):
-    repo_config = github_data['ow_repo_config'] or {}
+@deal.pure
+def has_support_of_python_versions(
+    github_data: Mapping[str, Any],
+    C01: List[str],
+    required_python_versions: List[str],
+) -> List[str]:
+    repo_config: Mapping[str, str] = github_data['ow_repo_config'] or {}  # type: ignore
     if 'python' not in repo_config.get('main_languages', '') or C01:
-        return
+        return []
 
     python_build_versions = yaml.load(
         github_data['ci_config_content'],
@@ -100,14 +120,15 @@ def has_support_of_python_versions(github_data, C01, required_python_versions):
     return errors
 
 
+@deal.pure
 def fetch_package_name(
-    github_data,
+    github_data: Mapping[str, str],
     package_name_path: str,
-):
+) -> Optional[str]:
     package_var_name = package_name_path.split(':')[-1]
     file_content = github_data['file_with_package_name_content']
     if file_content is None:
-        return {'package_name': None}
+        return
     package_name = None
     for line in file_content.splitlines():
         prepared_line = line.split('#')[0].strip().replace(' ', '')
@@ -116,12 +137,15 @@ def fetch_package_name(
     return package_name
 
 
-def analyze_is_pypi_response_ok(package_name, github_data):
+def analyze_is_pypi_response_ok(
+    package_name: str,
+    github_data: Mapping[str, Any],
+) -> bool:
     if (
         github_data['ow_repo_config'].get('type') == 'project'
         and 'python' not in github_data['ow_repo_config'].get('main_languages', '')
     ):
-        return
+        return False
 
     is_pypi_response_ok = None
     if package_name is not None:
@@ -129,27 +153,43 @@ def analyze_is_pypi_response_ok(package_name, github_data):
     return is_pypi_response_ok
 
 
-def has_package_name(package_name, package_name_path, github_data):
+@deal.pure
+def has_package_name(
+    package_name: str,
+    package_name_path: str,
+    github_data: Mapping[str, Any],
+) -> List[str]:
     if (
         github_data['ow_repo_config'].get('type') == 'project'
         or 'python' not in github_data['ow_repo_config'].get('main_languages', '')
     ):
-        return
-    if not package_name:
-        return [f'Package name not found at {package_name_path}']
+        return []
+    return [f'Package name not found at {package_name_path}'] if not package_name else []
 
 
-def is_package_on_pypi(is_pypi_response_ok, package_name, github_data):
+@deal.pure
+def is_package_on_pypi(
+    is_pypi_response_ok: Optional[bool],
+    package_name: str,
+    github_data: Mapping[str, Any],
+) -> List[str]:
     if (
         github_data['ow_repo_config'].get('type') == 'project'
         and 'python' not in github_data['ow_repo_config'].get('main_languages', '')
     ):
-        return
-    if package_name and not is_pypi_response_ok:
-        return [f'Package {package_name} is not released at PyPI']
+        return []
+    return (
+        [f'Package {package_name} is not released at PyPI']
+        if package_name and not is_pypi_response_ok
+        else []
+    )
 
 
-def has_commits_in_last_n_months(github_data, max_age_of_last_commit_in_months):
+@deal.pure
+def has_commits_in_last_n_months(
+    github_data: Mapping[str, Any],
+    max_age_of_last_commit_in_months: int,
+) -> List[str]:
     delta_days = (datetime.datetime.now() - github_data['last_commit_date']).days
     errors = []
     if delta_days / 30 > max_age_of_last_commit_in_months:
@@ -176,7 +216,8 @@ def fetch_code_climate_badge_token(owner, repo_name, code_climate_api_token):
     return badge_token
 
 
-def fetch_test_coverage_badge_url(code_climate_badge_token):
+@deal.pure
+def fetch_test_coverage_badge_url(code_climate_badge_token: str) -> Optional[str]:
     return (
         f'https://api.codeclimate.com/v1/badges/{code_climate_badge_token}/test_coverage'
         if code_climate_badge_token
@@ -184,9 +225,15 @@ def fetch_test_coverage_badge_url(code_climate_badge_token):
     )
 
 
-def is_project_exists_on_codeclimate(code_climate_repo_id, owner, repo_name, github_data):
+@deal.pure
+def is_project_exists_on_codeclimate(
+    code_climate_repo_id: Optional[str],
+    owner: str,
+    repo_name: str,
+    github_data: Mapping[str, Any],
+) -> List[str]:
     if github_data['ow_repo_config'].get('type') == 'readings':
-        return
+        return []
 
     errors = []
     if code_climate_repo_id is None:
@@ -194,16 +241,27 @@ def is_project_exists_on_codeclimate(code_climate_repo_id, owner, repo_name, git
     return errors
 
 
-def has_test_coverage_info(test_coverage, code_climate_repo_id, owner, repo_name):
+@deal.pure
+def has_test_coverage_info(
+    test_coverage: Optional[float],
+    code_climate_repo_id: Optional[str],
+    owner: str,
+    repo_name: str,
+) -> List[str]:
     errors = []
     if code_climate_repo_id and test_coverage is None:
         errors = [f'No test coverage info found for {owner}/{repo_name} at Codeclimate']
     return errors
 
 
-def is_test_coverage_fine(test_coverage, min_test_coverage_percents, github_data):
+@deal.pure
+def is_test_coverage_fine(
+    test_coverage: Optional[float],
+    min_test_coverage_percents: int,
+    github_data: Mapping[str, Any],
+) -> List[str]:
     if github_data['ow_repo_config'].get('type') == 'readings':
-        return
+        return []
 
     errors = []
     if test_coverage and test_coverage < min_test_coverage_percents:
@@ -213,7 +271,11 @@ def is_test_coverage_fine(test_coverage, min_test_coverage_percents, github_data
     return errors
 
 
-def is_test_coverage_badge_exists(github_data, test_coverage_badge_url, owner, repo_name):
+@deal.pure
+def is_test_coverage_badge_exists(
+    github_data: Mapping[str, str],
+    test_coverage_badge_url: str,
+) -> List[str]:
     errors = []
     readme_content = github_data['readme_content']
     if (
@@ -227,7 +289,8 @@ def is_test_coverage_badge_exists(github_data, test_coverage_badge_url, owner, r
     return errors
 
 
-def fetch_issues_stale_days(github_data):
+@deal.pure
+def fetch_issues_stale_days(github_data: Mapping[str, Any]) -> Mapping[str, int]:
     issues_stale_days = {}
     for issue in github_data['open_issues']:
         updated_at = datetime.datetime.fromisoformat(issue['updated_at'][:-1])
@@ -242,14 +305,15 @@ def fetch_issues_stale_days(github_data):
     return issues_stale_days
 
 
+@deal.pure
 def has_enough_actual_issues(
-    github_data,
-    issues_stale_days,
-    max_issue_update_age_months,
-    min_number_of_actual_issues,
-):
+    github_data: Mapping[str, Any],
+    issues_stale_days: Mapping[str, int],
+    max_issue_update_age_months: int,
+    min_number_of_actual_issues: int,
+) -> List[str]:
     if github_data['ow_repo_config'].get('features_from_contributors_are_welcome') == 'False':
-        return
+        return []
 
     actual_issues = 0
     for issue in github_data['open_issues']:
@@ -263,7 +327,8 @@ def has_enough_actual_issues(
     return errors
 
 
-def analyze_is_prs_ok_to_merge(github_data):
+@deal.pure
+def analyze_is_prs_ok_to_merge(github_data: Mapping[str, Any]) -> Mapping[str, bool]:
     is_prs_ok_to_merge = {p['number']: True for p in github_data['open_pull_requests']}
     for pull_request in github_data['open_pull_requests']:
         pr_number = pull_request['number']
@@ -279,8 +344,11 @@ def analyze_is_prs_ok_to_merge(github_data):
     return is_prs_ok_to_merge
 
 
-def componse_pull_requests_updated_at(github_data):
-    pull_requests_updated_at = {p['number']: True for p in github_data['open_pull_requests']}
+@deal.pure
+def compose_pull_requests_updated_at(
+    github_data: Mapping[str, Any],
+) -> Mapping[str, datetime.datetime]:
+    pull_requests_updated_at = {}
     for pull_request in github_data['open_pull_requests']:
         pr_number = pull_request['number']
         updated_at = pull_request['updated_at']
@@ -296,12 +364,13 @@ def componse_pull_requests_updated_at(github_data):
     return pull_requests_updated_at
 
 
+@deal.pure
 def has_no_stale_pull_requests(
-    github_data,
-    is_prs_ok_to_merge,
-    pull_requests_updated_at,
-    max_ok_pr_age_days,
-):
+    github_data: Mapping[str, Any],
+    is_prs_ok_to_merge: Mapping[str, bool],
+    pull_requests_updated_at: Mapping[str, datetime.datetime],
+    max_ok_pr_age_days: int,
+) -> List[str]:
     errors = []
     for base_pull_request_info in github_data['open_pull_requests']:
         pull_request = github_data['detailed_pull_requests'][base_pull_request_info['number']]
@@ -316,7 +385,8 @@ def has_no_stale_pull_requests(
     return errors
 
 
-def create_master_pipeline(**kwargs) -> AdvancedComposer:
+@deal.pure
+def create_master_pipeline(**kwargs: Any) -> AdvancedComposer:
     pipes = {
         'D01': has_readme,
         'D02': has_required_sections_in_readme,
@@ -349,6 +419,6 @@ def create_master_pipeline(**kwargs) -> AdvancedComposer:
         analyze_is_prs_ok_to_merge,
         analyze_is_pypi_response_ok,
     ).update_without_prefix(
-        'componse_',
-        componse_pull_requests_updated_at,
+        'compose_',
+        compose_pull_requests_updated_at,
     ).update(**pipes)

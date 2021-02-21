@@ -1,3 +1,7 @@
+from typing import Any
+
+import deal
+
 from opensource_watchman.api.travis import TravisRepoAPI
 from opensource_watchman.composer import AdvancedComposer
 
@@ -22,7 +26,8 @@ def fetch_crontabs_info(api):
     return api.fetch_crontabs_info()
 
 
-def create_travis_pipeline(**kwargs) -> AdvancedComposer:
+@deal.pure
+def create_travis_pipeline(**kwargs: Any) -> AdvancedComposer:
     return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(
         'create_',
         create_api,
