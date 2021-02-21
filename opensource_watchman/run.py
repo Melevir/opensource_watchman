@@ -9,9 +9,9 @@ from click import command, option, argument, Choice
 from opensource_watchman.common_types import RepoResult, OpensourceWatchmanConfig
 from opensource_watchman.config import DEFAULT_HTML_REPORT_FILE_NAME
 from opensource_watchman.output_processors import print_errors_data, prepare_html_report
-from opensource_watchman.pipelines.github import GithubReceiveDataPipeline
-from opensource_watchman.pipelines.travis import TravisReceiveDataPipeline
-from opensource_watchman.pipelines.master import MasterPipeline
+from opensource_watchman.pipelines.github import create_github_pipeline
+from opensource_watchman.pipelines.travis import create_travis_pipeline
+from opensource_watchman.pipelines.master import create_master_pipeline
 from opensource_watchman.prerequisites import python_only, rus_only
 from opensource_watchman.api.github import GithubRepoAPI
 
@@ -83,8 +83,7 @@ def run_watchman(
         ]
     )
     for repo_to_process in repos_to_process:
-        github_pipeline = GithubReceiveDataPipeline()
-        github_pipeline.run(
+        github_pipeline = create_github_pipeline(
             owner=owner,
             repo_name=repo_to_process,
             config_file_name=config.config_file_name,
@@ -95,20 +94,20 @@ def run_watchman(
             github_login=config.github_login,
             github_api_token=config.github_api_token,
         )
-        travis_pipeline = TravisReceiveDataPipeline()
-        travis_pipeline.run(
+        github_results = github_pipeline.run_all()
+        travis_pipeline = create_travis_pipeline(
             owner=owner,
             repo_name=repo_to_process,
             travis_api_login=config.travis_api_login,
         )
+        travis_results = travis_pipeline.run_all()
 
-        pipeline = MasterPipeline()
-        pipeline.run(
+        pipeline = create_master_pipeline(
             owner=owner,
             repo_name=repo_to_process,
             package_name_path=config.package_name_path,
-            github_data=github_pipeline.__context__,
-            travis_data=travis_pipeline.__context__,
+            github_data=github_results,
+            travis_data=travis_results,
             required_readme_sections=config.required_readme_sections,
             required_commands_to_run_in_build=config.required_commands_to_run_in_build,
             required_python_versions=config.required_python_versions,
@@ -119,13 +118,14 @@ def run_watchman(
             max_issue_update_age_months=config.max_issue_update_age_months,
             max_ok_pr_age_days=config.max_ok_pr_age_days,
         )
+        pipeline_results = pipeline.run_all()
 
-        errors_info = {c: e for (c, e) in pipeline.__context__.items() if len(c) == 3 and e}
+        errors_info = {c: e for (c, e) in pipeline_results.items() if len(c) == 3 and e}
         repos_info.append(RepoResult(
             owner=owner,
-            package_name=pipeline.__context__['package_name'],
-            description=github_pipeline.__context__['project_description'],
-            badges_urls=github_pipeline.__context__['badges_urls'],
+            package_name=pipeline_results['package_name'],
+            description=github_results['project_description'],
+            badges_urls=github_results['badges_urls'],
             repo_name=repo_to_process,
             errors=errors_info,
         ))

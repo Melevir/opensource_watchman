@@ -1,35 +1,35 @@
-from super_mario import BasePipeline, input_pipe, process_pipe
-
 from opensource_watchman.api.travis import TravisRepoAPI
+from opensource_watchman.composer import AdvancedComposer
 
 
-class TravisReceiveDataPipeline(BasePipeline):
-    pipeline = [
-        'create_api',
-        'fetch_last_build',
-        'create_badge_url',
-        'fetch_crontabs_info',
-    ]
+def create_api(owner: str, repo_name: str, travis_api_login: str):
+    return TravisRepoAPI(owner, repo_name, travis_api_login)
 
-    @process_pipe
-    @staticmethod
-    def create_api(owner: str, repo_name: str, travis_api_login: str):
-        return {'api': TravisRepoAPI(owner, repo_name, travis_api_login)}
 
-    @input_pipe
-    @staticmethod
-    def fetch_last_build(api):
-        return {
-            'last_build': api.fetch_last_build_info(),
-            'last_build_commands': api.get_last_build_commands(),
-        }
+def fetch_last_build(api):
+    return api.fetch_last_build_info()
 
-    @process_pipe
-    @staticmethod
-    def create_badge_url(owner: str, repo_name: str):
-        return {'badge_url': f'https://travis-ci.org/{owner}/{repo_name}.svg'}
 
-    @input_pipe
-    @staticmethod
-    def fetch_crontabs_info(api):
-        return {'crontabs_info': api.fetch_crontabs_info()}
+def fetch_last_build_commands(api):
+    return api.get_last_build_commands()
+
+
+def create_badge_url(owner: str, repo_name: str):
+    return f'https://travis-ci.org/{owner}/{repo_name}.svg'
+
+
+def fetch_crontabs_info(api):
+    return api.fetch_crontabs_info()
+
+
+def create_travis_pipeline(**kwargs) -> AdvancedComposer:
+    return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(
+        'create_',
+        create_api,
+        create_badge_url,
+    ).update_without_prefix(
+        'fetch_',
+        fetch_last_build,
+        fetch_last_build_commands,
+        fetch_crontabs_info,
+    )
