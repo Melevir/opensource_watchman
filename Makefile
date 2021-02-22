@@ -17,4 +17,4 @@ md_style:
 	mdl README.md
 
 check:
-	make -j6 test types deal_test style safety md_style
+	make -j5 test types style safety md_style

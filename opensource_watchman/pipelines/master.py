@@ -61,7 +61,7 @@ def is_ci_bild_status_ok(travis_data: TravisPipelineData, C01: List[str]) -> Lis
     return errors
 
 
-# this one is actually pure, but dealt has bug, that fires on this function on make deal_test
+# this one is actually pure, but deal has bug, that fires on this function on make deal_test
 def has_all_required_commands_in_build(
     required_commands_to_run_in_build: List[RequiredCICommandsConfig],
     github_data: GithubPipelineData,
@@ -399,7 +399,7 @@ def has_no_stale_pull_requests(
         if base_pull_request_info['number'] not in github_data['detailed_pull_requests']:
             continue
         pull_request = github_data['detailed_pull_requests'][base_pull_request_info['number']]
-        if is_prs_ok_to_merge[pull_request['number']]:
+        if is_prs_ok_to_merge.get(pull_request['number']):
             updated_at = pull_requests_updated_at[pull_request['number']]
             stale_for_days = (datetime.datetime.now() - updated_at).days
             if stale_for_days > max_ok_pr_age_days:
