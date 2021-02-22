@@ -7,8 +7,14 @@ test:
 types:
 	mypy opensource_watchman
 
-check:
-	mdl README.md
+style:
 	flake8 opensource_watchman
+
+safety:
 	safety check -r requirements.txt
-	make -j3 test types deal_test
+
+md_style:
+	mdl README.md
+
+check:
+	make -j6 test types deal_test style safety md_style

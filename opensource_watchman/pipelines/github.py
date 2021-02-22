@@ -13,6 +13,8 @@ from opensource_watchman.utils.images import get_image_height_in_pixels
 
 
 @deal.pure
+@deal.ensure(lambda _: _.result.owner == _.owner)
+@deal.ensure(lambda _: _.result.github_api_token == _.github_api_token)
 def create_api(
     owner: str,
     repo_name: str,
@@ -92,6 +94,7 @@ def fetch_pull_request_details(api, detailed_pull_requests):
 
 
 @deal.pure
+@deal.post(lambda r: r is None or r.endswith('.'))
 def fetch_project_description(repo_info: Mapping[str, str]) -> Optional[str]:
     raw_description = repo_info.get('description') if repo_info else None
     if raw_description and not raw_description.endswith('.'):
@@ -127,6 +130,7 @@ def fetch_badges_urls(readme_content):
 
 
 @deal.pure
+@deal.post(lambda r: r._functions)
 def create_github_pipeline(**kwargs) -> AdvancedComposer:
     return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(
         'create_',

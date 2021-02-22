@@ -27,6 +27,7 @@ def fetch_crontabs_info(api):
 
 
 @deal.pure
+@deal.post(lambda r: r._functions)
 def create_travis_pipeline(**kwargs: Any) -> AdvancedComposer:
     return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(
         'create_',
