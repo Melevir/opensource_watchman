@@ -1,3 +1,6 @@
+deal_test:
+	python -m deal test  *.py */*.py */*/*.py
+
 test:
 	python -m pytest --cov=opensource_watchman --cov-report=xml -p no:warnings --disable-network
 
@@ -8,4 +11,4 @@ check:
 	mdl README.md
 	flake8 opensource_watchman
 	safety check -r requirements.txt
-	make test types
+	make -j3 test types deal_test

@@ -8,15 +8,19 @@ from requests import get
 from typing import List, Mapping, Any, Optional
 
 from opensource_watchman.api.codeclimate_api import CodeClimateAPI
+from opensource_watchman.common_types import (
+    GithubPipelineData, TravisPipelineData, RequiredCICommandsConfig,
+)
 from opensource_watchman.composer import AdvancedComposer
+from opensource_watchman.utils.dates import parse_iso_datetime
 from opensource_watchman.utils.logs_analiser import if_logs_has_any_of_commands
 
 
 @deal.pure
 def has_readme(github_data: Mapping[str, str]) -> List[str]:
     error = (
-        f'{github_data["readme_file_name"]} not found'
-        if github_data['readme_content'] is None
+        f'{github_data.get("readme_file_name", "readme file")} not found'
+        if github_data.get('readme_content') is None
         else None
     )
     return [error] if error else []  # type: ignore
@@ -25,7 +29,7 @@ def has_readme(github_data: Mapping[str, str]) -> List[str]:
 @deal.pure
 def has_required_sections_in_readme(
     required_readme_sections: List[List[str]],
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
     D01: List[str],
 ) -> List[str]:
     if github_data['ow_repo_config'].get('type') == 'readings' or D01:
@@ -40,9 +44,9 @@ def has_required_sections_in_readme(
 
 
 @deal.pure
-def has_ci_config(github_data: Mapping[str, str]) -> List[str]:
+def has_ci_config(github_data: GithubPipelineData) -> List[str]:
     error = (
-        f'{github_data["ci_config_file_name"]} not found'
+        f'{github_data.get("ci_config_file_name", "ci config")} not found'
         if github_data['ci_config_content'] is None
         else None
     )
@@ -50,18 +54,18 @@ def has_ci_config(github_data: Mapping[str, str]) -> List[str]:
 
 
 @deal.pure
-def is_ci_bild_status_ok(travis_data: Mapping[str, Any], C01: List[str]) -> List[str]:
+def is_ci_bild_status_ok(travis_data: TravisPipelineData, C01: List[str]) -> List[str]:
     errors = []
     if not C01 and travis_data['last_build'] and travis_data['last_build']['state'] != 'passed':
         errors = [f'Current build status on Travis is not ok']
     return errors
 
 
-@deal.pure
+# this one is actually pure, but dealt has bug, that fires on this function on make deal_test
 def has_all_required_commands_in_build(
-    required_commands_to_run_in_build: List[Mapping[str, Any]],
-    github_data: Mapping[str, str],
-    travis_data: Mapping[str, Any],
+    required_commands_to_run_in_build: List[RequiredCICommandsConfig],
+    github_data: GithubPipelineData,
+    travis_data: TravisPipelineData,
 ) -> List[str]:
     errors: List[str] = []
     for section_info in required_commands_to_run_in_build:
@@ -78,8 +82,8 @@ def has_all_required_commands_in_build(
 
 @deal.pure
 def has_ci_badge_in_readme(
-    github_data: Mapping[str, str],
-    travis_data: Mapping[str, str],
+    github_data: GithubPipelineData,
+    travis_data: TravisPipelineData,
 ) -> List[str]:
     errors = []
     if (
@@ -91,7 +95,7 @@ def has_ci_badge_in_readme(
 
 
 @deal.pure
-def has_ci_weekly_build_enabled(travis_data: Mapping[str, Any], C01: List[str]) -> List[str]:
+def has_ci_weekly_build_enabled(travis_data: TravisPipelineData, C01: List[str]) -> List[str]:
     errors = ['Travis weekly cron build is not enabled']
     for crontab in travis_data['crontabs_info']:
         if crontab['interval'] == 'weekly':
@@ -101,7 +105,7 @@ def has_ci_weekly_build_enabled(travis_data: Mapping[str, Any], C01: List[str]) 
 
 @deal.pure
 def has_support_of_python_versions(
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
     C01: List[str],
     required_python_versions: List[str],
 ) -> List[str]:
@@ -122,7 +126,7 @@ def has_support_of_python_versions(
 
 @deal.pure
 def fetch_package_name(
-    github_data: Mapping[str, str],
+    github_data: GithubPipelineData,
     package_name_path: str,
 ) -> Optional[str]:
     package_var_name = package_name_path.split(':')[-1]
@@ -157,7 +161,7 @@ def analyze_is_pypi_response_ok(
 def has_package_name(
     package_name: str,
     package_name_path: str,
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
 ) -> List[str]:
     if (
         github_data['ow_repo_config'].get('type') == 'project'
@@ -171,7 +175,7 @@ def has_package_name(
 def is_package_on_pypi(
     is_pypi_response_ok: Optional[bool],
     package_name: str,
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
 ) -> List[str]:
     if (
         github_data['ow_repo_config'].get('type') == 'project'
@@ -187,7 +191,7 @@ def is_package_on_pypi(
 
 @deal.pure
 def has_commits_in_last_n_months(
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
     max_age_of_last_commit_in_months: int,
 ) -> List[str]:
     delta_days = (datetime.datetime.now() - github_data['last_commit_date']).days
@@ -230,7 +234,7 @@ def is_project_exists_on_codeclimate(
     code_climate_repo_id: Optional[str],
     owner: str,
     repo_name: str,
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
 ) -> List[str]:
     if github_data['ow_repo_config'].get('type') == 'readings':
         return []
@@ -258,7 +262,7 @@ def has_test_coverage_info(
 def is_test_coverage_fine(
     test_coverage: Optional[float],
     min_test_coverage_percents: int,
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
 ) -> List[str]:
     if github_data['ow_repo_config'].get('type') == 'readings':
         return []
@@ -273,7 +277,7 @@ def is_test_coverage_fine(
 
 @deal.pure
 def is_test_coverage_badge_exists(
-    github_data: Mapping[str, str],
+    github_data: GithubPipelineData,
     test_coverage_badge_url: str,
 ) -> List[str]:
     errors = []
@@ -290,16 +294,18 @@ def is_test_coverage_badge_exists(
 
 
 @deal.pure
-def fetch_issues_stale_days(github_data: Mapping[str, Any]) -> Mapping[str, int]:
+def fetch_issues_stale_days(github_data: GithubPipelineData) -> Mapping[int, int]:
     issues_stale_days = {}
     for issue in github_data['open_issues']:
-        updated_at = datetime.datetime.fromisoformat(issue['updated_at'][:-1])
+        updated_at = parse_iso_datetime(issue['updated_at'])
+        if updated_at is None:
+            continue
         stale_for_days = (datetime.datetime.now() - updated_at).days
         if issue['comments']:
             comments = github_data['issues_comments'][issue['number']]
-            last_comment_date = datetime.datetime.fromisoformat(
-                max(c['updated_at'] for c in comments)[:-1],
-            )
+            last_comment_date = parse_iso_datetime(max(c['updated_at'] for c in comments))
+            if last_comment_date is None:
+                continue
             stale_for_days = (datetime.datetime.now() - last_comment_date).days
         issues_stale_days[issue['number']] = stale_for_days
     return issues_stale_days
@@ -307,8 +313,8 @@ def fetch_issues_stale_days(github_data: Mapping[str, Any]) -> Mapping[str, int]
 
 @deal.pure
 def has_enough_actual_issues(
-    github_data: Mapping[str, Any],
-    issues_stale_days: Mapping[str, int],
+    github_data: GithubPipelineData,
+    issues_stale_days: Mapping[int, int],
     max_issue_update_age_months: int,
     min_number_of_actual_issues: int,
 ) -> List[str]:
@@ -317,6 +323,8 @@ def has_enough_actual_issues(
 
     actual_issues = 0
     for issue in github_data['open_issues']:
+        if issue['number'] not in issues_stale_days:
+            continue
         stale_for_days = issues_stale_days[issue['number']]
         if stale_for_days / 30 < max_issue_update_age_months:
             actual_issues += 1
@@ -328,10 +336,12 @@ def has_enough_actual_issues(
 
 
 @deal.pure
-def analyze_is_prs_ok_to_merge(github_data: Mapping[str, Any]) -> Mapping[str, bool]:
+def analyze_is_prs_ok_to_merge(github_data: GithubPipelineData) -> Mapping[int, bool]:
     is_prs_ok_to_merge = {p['number']: True for p in github_data['open_pull_requests']}
     for pull_request in github_data['open_pull_requests']:
         pr_number = pull_request['number']
+        if pr_number not in github_data['pull_request_details']:
+            continue
         statuses_info = github_data['pull_request_details'][pr_number]['statuses_info']
         if statuses_info and statuses_info[0]['state'] != 'success':
             is_prs_ok_to_merge[pr_number] = False
@@ -346,12 +356,14 @@ def analyze_is_prs_ok_to_merge(github_data: Mapping[str, Any]) -> Mapping[str, b
 
 @deal.pure
 def compose_pull_requests_updated_at(
-    github_data: Mapping[str, Any],
-) -> Mapping[str, datetime.datetime]:
+    github_data: GithubPipelineData,
+) -> Mapping[int, datetime.datetime]:
     pull_requests_updated_at = {}
     for pull_request in github_data['open_pull_requests']:
         pr_number = pull_request['number']
         updated_at = pull_request['updated_at']
+        if pr_number not in github_data['pull_request_details']:
+            continue
         comments = github_data['pull_request_details'][pr_number]['comments']
         last_comment = (
             max(comments, key=operator.itemgetter('updated_at'))
@@ -360,19 +372,24 @@ def compose_pull_requests_updated_at(
         )
         if last_comment and last_comment['updated_at'] > updated_at:
             updated_at = last_comment['updated_at']
-        pull_requests_updated_at[pr_number] = datetime.datetime.fromisoformat(updated_at[:-1])
+        try:
+            pull_requests_updated_at[pr_number] = datetime.datetime.fromisoformat(updated_at[:-1])
+        except ValueError:
+            continue
     return pull_requests_updated_at
 
 
 @deal.pure
 def has_no_stale_pull_requests(
-    github_data: Mapping[str, Any],
-    is_prs_ok_to_merge: Mapping[str, bool],
-    pull_requests_updated_at: Mapping[str, datetime.datetime],
+    github_data: GithubPipelineData,
+    is_prs_ok_to_merge: Mapping[int, bool],
+    pull_requests_updated_at: Mapping[int, datetime.datetime],
     max_ok_pr_age_days: int,
 ) -> List[str]:
     errors = []
     for base_pull_request_info in github_data['open_pull_requests']:
+        if base_pull_request_info['number'] not in github_data['detailed_pull_requests']:
+            continue
         pull_request = github_data['detailed_pull_requests'][base_pull_request_info['number']]
         if is_prs_ok_to_merge[pull_request['number']]:
             updated_at = pull_requests_updated_at[pull_request['number']]
