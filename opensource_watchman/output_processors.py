@@ -46,7 +46,7 @@ def prepare_html_report(
     render_html_report(context, html_template_path, result_filename)
 
 
-def get_total_stat(repos_stat):
+def get_total_stat(repos_stat: List[RepoResult]) -> Mapping[str, Any]:
     return {
         'checked_repos_number': len(repos_stat),
         'ok_repos_number': sum(1 for r in repos_stat if r.status == 'ok'),

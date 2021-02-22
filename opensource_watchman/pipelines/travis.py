@@ -6,15 +6,15 @@ from opensource_watchman.api.travis import TravisRepoAPI
 from opensource_watchman.composer import AdvancedComposer
 
 
-def create_api(owner: str, repo_name: str, travis_api_login: str):
+def create_api(owner: str, repo_name: str, travis_api_login: str) -> TravisRepoAPI:
     return TravisRepoAPI(owner, repo_name, travis_api_login)
 
 
-def fetch_last_build(api):
+def fetch_last_build(api: TravisRepoAPI):
     return api.fetch_last_build_info()
 
 
-def fetch_last_build_commands(api):
+def fetch_last_build_commands(api: TravisRepoAPI):
     return api.get_last_build_commands()
 
 
@@ -22,7 +22,7 @@ def create_badge_url(owner: str, repo_name: str):
     return f'https://travis-ci.org/{owner}/{repo_name}.svg'
 
 
-def fetch_crontabs_info(api):
+def fetch_crontabs_info(api: TravisRepoAPI):
     return api.fetch_crontabs_info()
 
 

@@ -57,7 +57,7 @@ def has_ci_config(github_data: GithubPipelineData) -> List[str]:
 def is_ci_bild_status_ok(travis_data: TravisPipelineData, C01: List[str]) -> List[str]:
     errors = []
     if not C01 and travis_data['last_build'] and travis_data['last_build']['state'] != 'passed':
-        errors = [f'Current build status on Travis is not ok']
+        errors = ['Current build status on Travis is not ok']
     return errors
 
 
@@ -204,17 +204,25 @@ def has_commits_in_last_n_months(
     return errors
 
 
-def fetch_code_climate_repo_id(owner, repo_name, code_climate_api_token):
+def fetch_code_climate_repo_id(
+    owner: str,
+    repo_name: str,
+    code_climate_api_token: str,
+) -> Optional[str]:
     cc_api = CodeClimateAPI.create(owner, repo_name, code_climate_api_token)
     return cc_api.code_climate_repo_id
 
 
-def fetch_test_coverage(owner, repo_name, code_climate_api_token):
+def fetch_test_coverage(owner: str, repo_name: str, code_climate_api_token: str):
     cc_api = CodeClimateAPI.create(owner, repo_name, code_climate_api_token)
     return cc_api.get_test_coverage()
 
 
-def fetch_code_climate_badge_token(owner, repo_name, code_climate_api_token):
+def fetch_code_climate_badge_token(
+    owner: str,
+    repo_name: str,
+    code_climate_api_token: str,
+) -> Optional[str]:
     cc_api = CodeClimateAPI.create(owner, repo_name, code_climate_api_token)
     badge_token = cc_api.get_badge_token()
     return badge_token
@@ -423,7 +431,7 @@ def create_master_pipeline(**kwargs: Any) -> AdvancedComposer:
         'I01': has_enough_actual_issues,
         'M01': has_no_stale_pull_requests,
     }
-    return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(
+    return AdvancedComposer().update_parameters(**kwargs).update_without_prefix(  # noqa: ECE001
         'fetch_',
         fetch_code_climate_repo_id,
         fetch_test_coverage,

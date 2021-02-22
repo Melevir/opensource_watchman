@@ -1,5 +1,7 @@
 import datetime
-from typing import NamedTuple, List, Mapping, Dict, Optional, TypedDict, Callable  # noqa: TYP001
+from typing import (  # noqa: TYP001
+    NamedTuple, List, Mapping, Dict, Optional, TypedDict, Callable, Generator,
+)
 import enum
 
 from opensource_watchman.config import ERRORS_SEVERITY
@@ -20,14 +22,14 @@ class RepoResult(NamedTuple):
     errors: Dict[str, List[str]]
 
     @property
-    def status(self):
+    def status(self) -> str:
         if not self.errors:
             return 'ok'
         severities = {ERRORS_SEVERITY[e] for e in self. errors.keys()}
         return 'critical' if 'critical' in severities else 'warning'
 
     @property
-    def iterate_errors_with_severities(self):
+    def iterate_errors_with_severities(self) -> Generator:
         for error_slug, errors in self.errors.items():
             for error in errors:
                 yield error_slug, error, ERRORS_SEVERITY[error_slug]

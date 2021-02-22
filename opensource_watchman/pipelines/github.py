@@ -2,7 +2,7 @@ import configparser
 import datetime
 import operator
 import re
-from typing import Optional, Mapping
+from typing import Optional, Mapping, Dict, Any
 
 import deal
 from PIL import UnidentifiedImageError
@@ -28,11 +28,11 @@ def fetch_readme_content(api: GithubRepoAPI, readme_file_name: str) -> Optional[
     return api.fetch_file_contents(readme_file_name)
 
 
-def fetch_ci_config_content(api, ci_config_file_name):
+def fetch_ci_config_content(api: GithubRepoAPI, ci_config_file_name: str):
     return api.fetch_file_contents(ci_config_file_name)
 
 
-def fetch_file_with_package_name_content(api, package_name_path):
+def fetch_file_with_package_name_content(api: GithubRepoAPI, package_name_path: str):
     return api.fetch_file_contents(
         package_name_path.split(':')[0],
     )
@@ -61,11 +61,11 @@ def fetch_issues_comments(api: GithubRepoAPI, open_issues):
     }
 
 
-def fetch_open_pull_requests(api):
+def fetch_open_pull_requests(api: GithubRepoAPI):
     return api.fetch_open_pull_requests()
 
 
-def fetch_detailed_pull_requests(api, open_pull_requests):
+def fetch_detailed_pull_requests(api: GithubRepoAPI, open_pull_requests):
     pull_requests = {}
     for pull_request in open_pull_requests:
         pr = api.fetch_pull_request(pull_request['number'])
@@ -74,8 +74,8 @@ def fetch_detailed_pull_requests(api, open_pull_requests):
     return pull_requests
 
 
-def fetch_pull_request_details(api, detailed_pull_requests):
-    pull_request_details = {p: {} for p in detailed_pull_requests.keys()}
+def fetch_pull_request_details(api: GithubRepoAPI, detailed_pull_requests: Mapping[int, Mapping]):
+    pull_request_details: Dict[int, Dict[str, Any]] = {p: {} for p in detailed_pull_requests.keys()}
     for pull_request in detailed_pull_requests.values():
         pr_commits = api.fetch_commits(pull_request_number=pull_request['number'])
         last_commit_sha = pr_commits[-1]['sha'] if pr_commits else None
@@ -102,7 +102,7 @@ def fetch_project_description(repo_info: Mapping[str, str]) -> Optional[str]:
     return raw_description
 
 
-def fetch_ow_repo_config(api, config_file_name, config_section_name):
+def fetch_ow_repo_config(api: GithubRepoAPI, config_file_name: str, config_section_name: str):
     config = {}
     config_file_content = api.fetch_file_contents(config_file_name)
     if config_file_content:
@@ -112,7 +112,7 @@ def fetch_ow_repo_config(api, config_file_name, config_section_name):
     return config
 
 
-def fetch_badges_urls(readme_content):
+def fetch_badges_urls(readme_content: str):
     if not readme_content:
         return {'badges_urls': []}
     image_urls = re.findall(r'(?:!\[.*?\]\((.*?)\))', readme_content)

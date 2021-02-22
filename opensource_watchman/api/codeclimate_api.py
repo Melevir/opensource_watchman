@@ -1,4 +1,4 @@
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, Any, Mapping
 
 import deal
 from requests import get
@@ -20,7 +20,7 @@ class CodeClimateAPI(NamedTuple):
             CodeClimateAPI(owner, repo_name, api_token, None).get_repo_id(),
         )
 
-    def get_repo_info(self):
+    def get_repo_info(self) -> Optional[Mapping[str, Any]]:
         response = get(
             f'https://api.codeclimate.com/v1/repos?github_slug={self.owner}/{self.repo_name}',
             headers={'Authorization': f'Token token={self.api_token}'},
@@ -28,6 +28,7 @@ class CodeClimateAPI(NamedTuple):
         if response:
             raw_data = response.json()['data']
             return raw_data[0] if raw_data else None
+        return None
 
     def get_repo_id(self) -> Optional[str]:
         repo_info = self.get_repo_info()

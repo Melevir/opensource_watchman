@@ -53,7 +53,12 @@ def load_config() -> OpensourceWatchmanConfig:
     )
 
 
-def get_repos_names(owner, github_login, github_token, skip_archived):
+def get_repos_names(
+    owner: str,
+    github_login: str,
+    github_token: str,
+    skip_archived: bool,
+) -> List[str]:
     repos = GithubRepoAPI(owner, None, github_login, github_token).fetch_repos_list() or []
     if skip_archived:
         repos = [r for r in repos if not r['archived']]
@@ -61,7 +66,7 @@ def get_repos_names(owner, github_login, github_token, skip_archived):
     return [r['name'] for r in reversed(repos)]
 
 
-def run_watchman(
+def run_watchman(  # noqa: CFQ001
     owner: str,
     repo_name: Optional[str],
     exclude_list: List[str],
@@ -132,7 +137,7 @@ def run_watchman(
     return repos_info
 
 
-def process_results(
+def process_results(  # noqa: CFQ002
     owner: str,
     repos_stat: List[RepoResult],
     output_type: str,
@@ -169,7 +174,7 @@ def process_results(
     help='importable path of callable, that provides additional context for html template',
 )
 @option('--result_filename', help='result filename')
-def main(
+def main(  # noqa: CFQ002
     owner: str,
     repo_name: Optional[str],
     config_path: Optional[str],

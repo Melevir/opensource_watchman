@@ -1,4 +1,4 @@
-from typing import Optional, Any, Mapping, NamedTuple
+from typing import Optional, Any, Mapping, NamedTuple, List
 
 from requests import get
 from requests.auth import HTTPBasicAuth
@@ -10,19 +10,7 @@ class GithubRepoAPI(NamedTuple):
     github_login: str
     github_api_token: str
 
-    def _fetch_data_from_github(self, relative_url: str) -> Optional[Mapping[str, Any]]:
-        raw_response = get(
-            f'https://api.github.com{relative_url}',
-            auth=HTTPBasicAuth(self.github_login, self.github_api_token),
-        )
-        return raw_response.json() if raw_response else None
-
-    def _fetch_data_from_github_repo(self, relative_url: str) -> Optional[Mapping[str, Any]]:
-        return self._fetch_data_from_github(
-            relative_url=f'/repos/{self.owner}/{self.repo_name}{relative_url}',
-        )
-
-    def fetch_repos_list(self):
+    def fetch_repos_list(self) -> Optional[List[Mapping[str, Any]]]:
         return self._fetch_data_from_github(relative_url=f'/users/{self.owner}/repos')
 
     def fetch_file_contents(self, file_path: str) -> Optional[str]:
@@ -32,7 +20,7 @@ class GithubRepoAPI(NamedTuple):
         response = get(file_url)
         return response.text if response else None
 
-    def fetch_repo_info(self):
+    def fetch_repo_info(self) -> Mapping[str, Any]:
         return self._fetch_data_from_github_repo(relative_url='')
 
     def fetch_commits(self, pull_request_number: int = None):
@@ -48,7 +36,7 @@ class GithubRepoAPI(NamedTuple):
     def fetch_commit_reviews(self, commit_sha: str):
         return self._fetch_data_from_github_repo(relative_url=f'/commits/{commit_sha}/reviews')
 
-    def fetch_open_issues(self):
+    def fetch_open_issues(self) -> List[Mapping[str, Any]]:
         return self._fetch_data_from_github_repo(relative_url='/issues') or []
 
     def fetch_issue_comments(self, issue_number: int):
@@ -56,7 +44,7 @@ class GithubRepoAPI(NamedTuple):
             relative_url=f'/issues/{issue_number}/comments',
         ) or []
 
-    def fetch_open_pull_requests(self):
+    def fetch_open_pull_requests(self) -> List[Mapping[str, Any]]:
         return self._fetch_data_from_github_repo(relative_url='/pulls') or []
 
     def fetch_pull_request(self, pr_number: int):
@@ -64,3 +52,15 @@ class GithubRepoAPI(NamedTuple):
 
     def fetch_pull_request_comments(self, pr_number: int):
         return self._fetch_data_from_github_repo(relative_url=f'/pulls/{pr_number}/comments')
+
+    def _fetch_data_from_github(self, relative_url: str):
+        raw_response = get(
+            f'https://api.github.com{relative_url}',
+            auth=HTTPBasicAuth(self.github_login, self.github_api_token),
+        )
+        return raw_response.json() if raw_response else None
+
+    def _fetch_data_from_github_repo(self, relative_url: str):
+        return self._fetch_data_from_github(
+            relative_url=f'/repos/{self.owner}/{self.repo_name}{relative_url}',
+        )
