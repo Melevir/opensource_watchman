@@ -2,7 +2,7 @@ deal_test:
 	python -m deal test  *.py */*.py */*/*.py
 
 test:
-	python -m pytest --cov=opensource_watchman --cov-report=xml -p no:warnings --disable-network
+	python -m pytest --cov=opensource_watchman --cov-report=xml -p no:warnings --disable-network -n 4
 
 types:
 	mypy opensource_watchman

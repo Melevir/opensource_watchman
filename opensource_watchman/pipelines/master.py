@@ -17,7 +17,7 @@ from opensource_watchman.utils.logs_analiser import if_logs_has_any_of_commands
 
 
 @deal.pure
-def has_readme(github_data: Mapping[str, str]) -> List[str]:
+def has_readme(github_data: GithubPipelineData) -> List[str]:
     error = (
         f'{github_data.get("readme_file_name", "readme file")} not found'
         if github_data.get('readme_content') is None
@@ -27,6 +27,7 @@ def has_readme(github_data: Mapping[str, str]) -> List[str]:
 
 
 @deal.pure
+@deal.ensure(lambda _: (_.result == []) if _.D01 else True)
 def has_required_sections_in_readme(
     required_readme_sections: List[List[str]],
     github_data: GithubPipelineData,
@@ -54,6 +55,7 @@ def has_ci_config(github_data: GithubPipelineData) -> List[str]:
 
 
 @deal.pure
+@deal.post(lambda r: len(r) < 2)
 def is_ci_bild_status_ok(travis_data: TravisPipelineData, C01: List[str]) -> List[str]:
     errors = []
     if not C01 and travis_data['last_build'] and travis_data['last_build']['state'] != 'passed':
@@ -95,6 +97,7 @@ def has_ci_badge_in_readme(
 
 
 @deal.pure
+@deal.ensure(lambda _: (_.result == []) if _.C01 else True)
 def has_ci_weekly_build_enabled(travis_data: TravisPipelineData, C01: List[str]) -> List[str]:
     errors = ['Travis weekly cron build is not enabled']
     for crontab in travis_data['crontabs_info']:
@@ -104,6 +107,7 @@ def has_ci_weekly_build_enabled(travis_data: TravisPipelineData, C01: List[str])
 
 
 @deal.pure
+@deal.ensure(lambda _: (_.result == []) if _.C01 else True)
 def has_support_of_python_versions(
     github_data: GithubPipelineData,
     C01: List[str],
@@ -344,6 +348,7 @@ def has_enough_actual_issues(
 
 
 @deal.pure
+@deal.ensure(lambda _: len(_.result) <= len(_.github_data['open_pull_requests']))
 def analyze_is_prs_ok_to_merge(github_data: GithubPipelineData) -> Mapping[int, bool]:
     is_prs_ok_to_merge = {p['number']: True for p in github_data['open_pull_requests']}
     for pull_request in github_data['open_pull_requests']:
@@ -363,6 +368,7 @@ def analyze_is_prs_ok_to_merge(github_data: GithubPipelineData) -> Mapping[int, 
 
 
 @deal.pure
+@deal.ensure(lambda _: len(_.result) <= len(_.github_data['open_pull_requests']))
 def compose_pull_requests_updated_at(
     github_data: GithubPipelineData,
 ) -> Mapping[int, datetime.datetime]:
@@ -388,6 +394,7 @@ def compose_pull_requests_updated_at(
 
 
 @deal.pure
+@deal.ensure(lambda _: len(_.result) <= len(_.github_data['open_pull_requests']))
 def has_no_stale_pull_requests(
     github_data: GithubPipelineData,
     is_prs_ok_to_merge: Mapping[int, bool],
@@ -411,6 +418,7 @@ def has_no_stale_pull_requests(
 
 
 @deal.pure
+@deal.post(lambda r: r._functions)
 def create_master_pipeline(**kwargs: Any) -> AdvancedComposer:
     pipes = {
         'D01': has_readme,
