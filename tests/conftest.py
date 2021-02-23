@@ -1,10 +1,14 @@
+import datetime
+from typing import List, Tuple, Union
+
 import pytest
 import responses
-from typing import List, Tuple, Union
 
 from opensource_watchman.api.codeclimate_api import CodeClimateAPI
 from opensource_watchman.api.github import GithubRepoAPI
-from opensource_watchman.common_types import RepoResult, OpensourceWatchmanConfig
+from opensource_watchman.common_types import (
+    RepoResult, OpensourceWatchmanConfig, GithubPipelineData,
+)
 
 
 class AdvancedRequestsMock(responses.RequestsMock):
@@ -65,6 +69,16 @@ def api_token():
 @pytest.fixture
 def config_file_name():
     return 'setup.cfg'
+
+
+@pytest.fixture
+def github_login(owner):
+    return owner
+
+
+@pytest.fixture
+def github_token(api_token):
+    return api_token
 
 
 @pytest.fixture
@@ -150,4 +164,22 @@ def repos_stat_with_errors(repos_stat_without_errors):
         badges_urls=repos_stat_without_errors.badges_urls,
         repo_name=repos_stat_without_errors.repo_name,
         errors={'D02': ['error']},
+    )
+
+
+@pytest.fixture
+def github_pipeline_result():
+    return GithubPipelineData(
+        ow_repo_config={'main_languages': 'python'},
+        readme_file_name='README.md',
+        readme_content='readme',
+        ci_config_file_name='.travis.ci',
+        ci_config_content='test:\n\t- ls',
+        file_with_package_name_content='__name__ = "test"',
+        last_commit_date=datetime.datetime(2021, 1, 15, 2),
+        open_issues=[],
+        issues_comments={},
+        open_pull_requests=[],
+        pull_request_details={},
+        detailed_pull_requests={},
     )

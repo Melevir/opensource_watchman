@@ -9,6 +9,7 @@ from opensource_watchman.api.travis import TravisRepoAPI
 from opensource_watchman.pipelines.extended_repo_info import fetch_downloads_stat
 from opensource_watchman.pipelines.github import fetch_last_commit_date, \
     fetch_detailed_pull_requests, fetch_ow_repo_config
+from opensource_watchman.pipelines.master import analyze_is_pypi_response_ok
 
 test_travis_extract_commands_from_raw_log = deal.cases(TravisRepoAPI._extract_commands_from_raw_log)
 
@@ -84,3 +85,10 @@ def test_fetch_ow_repo_config(mocked_responses, github_api, config_file_name, co
     ])
 
     assert fetch_ow_repo_config(github_api, config_file_name, config_section_name) == {'b': '2'}
+
+
+def test_analyze_is_pypi_response_ok(mocked_responses, github_pipeline_result):
+    mocked_responses.mock_calls([
+        'https://pypi.org/project/test/',
+    ])
+    assert analyze_is_pypi_response_ok('test', github_pipeline_result)

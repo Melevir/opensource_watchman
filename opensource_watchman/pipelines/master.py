@@ -117,10 +117,14 @@ def has_support_of_python_versions(
     if 'python' not in repo_config.get('main_languages', '') or C01:
         return []
 
-    python_build_versions = yaml.load(
-        github_data['ci_config_content'],
-        Loader=yaml.FullLoader,
-    ).get('python', [])
+    try:
+        config = yaml.load(
+            github_data['ci_config_content'],
+            Loader=yaml.FullLoader,
+        )
+    except yaml.YAMLError:
+        config = None
+    python_build_versions = config.get('python', []) if config and hasattr(config, 'get') else []
     errors: List[str] = []
     for required_python_version in required_python_versions:
         if required_python_version not in python_build_versions:
@@ -147,7 +151,7 @@ def fetch_package_name(
 
 def analyze_is_pypi_response_ok(
     package_name: str,
-    github_data: Mapping[str, Any],
+    github_data: GithubPipelineData,
 ) -> bool:
     if (
         github_data['ow_repo_config'].get('type') == 'project'

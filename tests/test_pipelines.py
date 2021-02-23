@@ -13,6 +13,7 @@ from opensource_watchman.pipelines.master import (
     compose_pull_requests_updated_at, has_no_stale_pull_requests, create_master_pipeline,
 )
 from opensource_watchman.pipelines.travis import create_travis_pipeline
+from opensource_watchman.utils.test_strategies import github_data_with_yaml_config
 
 
 test_github_create_api = deal.cases(create_api)
@@ -25,7 +26,6 @@ test_master_has_ci_config = deal.cases(has_ci_config)
 test_master_is_ci_bild_status_ok = deal.cases(is_ci_bild_status_ok)
 test_master_has_ci_badge_in_readme = deal.cases(has_ci_badge_in_readme)
 test_master_has_ci_weekly_build_enabled = deal.cases(has_ci_weekly_build_enabled)
-test_master_has_support_of_python_versions = deal.cases(has_support_of_python_versions)
 test_master_fetch_package_name = deal.cases(fetch_package_name)
 test_master_has_package_name = deal.cases(has_package_name)
 test_master_is_package_on_pypi = deal.cases(is_package_on_pypi)
@@ -41,6 +41,10 @@ test_master_analyze_is_prs_ok_to_merge = deal.cases(analyze_is_prs_ok_to_merge)
 test_master_compose_pull_requests_updated_at = deal.cases(compose_pull_requests_updated_at)
 test_master_has_no_stale_pull_requests = deal.cases(has_no_stale_pull_requests)
 test_master_create_master_pipeline = deal.cases(create_master_pipeline)
+test_master_has_support_of_python_versions = deal.cases(
+    has_support_of_python_versions,
+    kwargs={'github_data': github_data_with_yaml_config()},
+)
 
 
 def test_fetch_pull_request_details(github_api, detailed_pull_requests, mocked_responses):
