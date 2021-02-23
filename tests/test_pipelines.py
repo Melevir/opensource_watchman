@@ -1,7 +1,7 @@
 import deal
 
 from opensource_watchman.pipelines.github import (
-    create_api, fetch_project_description, create_github_pipeline,
+    create_api, fetch_project_description, create_github_pipeline, fetch_pull_request_details,
 )
 from opensource_watchman.pipelines.master import (
     has_readme, has_required_sections_in_readme,
@@ -41,3 +41,23 @@ test_master_analyze_is_prs_ok_to_merge = deal.cases(analyze_is_prs_ok_to_merge)
 test_master_compose_pull_requests_updated_at = deal.cases(compose_pull_requests_updated_at)
 test_master_has_no_stale_pull_requests = deal.cases(has_no_stale_pull_requests)
 test_master_create_master_pipeline = deal.cases(create_master_pipeline)
+
+
+def test_fetch_pull_request_details(github_api, detailed_pull_requests, mocked_responses):
+    mocked_responses.mock_calls([
+        ('https://api.github.com/repos/test/test/pulls/1/commits', [{'sha': '123123'}]),
+        'https://api.github.com/repos/test/test/commits/123123/statuses',
+        'https://api.github.com/repos/test/test/commits/123123/reviews',
+        'https://api.github.com/repos/test/test/pulls/1/comments',
+    ])
+
+    actual_result = fetch_pull_request_details(github_api, detailed_pull_requests)
+
+    assert actual_result == {
+        1: {
+            'last_commit_sha': '123123',
+            'statuses_info': [],
+            'last_review': None,
+            'comments': [],
+        },
+    }
