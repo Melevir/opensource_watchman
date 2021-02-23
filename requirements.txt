@@ -39,6 +39,7 @@ pytest==6.2.2
 pytest-cov==2.11.1
 pytest-xdist==2.2.1
 pytest-network==0.0.1
+pytest-mock==3.5.1
 Faker==4.0.2
 attrs==19.3.0
 safety==1.9.0
