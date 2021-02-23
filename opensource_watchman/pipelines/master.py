@@ -75,6 +75,8 @@ def has_all_required_commands_in_build(
             continue
 
         section = section_info['cmd']
+        if not section:
+            continue
         if not if_logs_has_any_of_commands(travis_data['last_build_commands'], section):
             error_perfix = f'None of {",".join(section)} is' if len(
                 section) > 1 else f'{section[0]} is not'

@@ -1,5 +1,7 @@
 import deal
+from hypothesis.strategies import lists, from_type
 
+from opensource_watchman.common_types import RequiredCICommandsConfig
 from opensource_watchman.pipelines.github import (
     create_api, fetch_project_description, create_github_pipeline, fetch_pull_request_details,
 )
@@ -11,6 +13,7 @@ from opensource_watchman.pipelines.master import (
     has_test_coverage_info, is_test_coverage_fine, is_test_coverage_badge_exists,
     fetch_issues_stale_days, has_enough_actual_issues, analyze_is_prs_ok_to_merge,
     compose_pull_requests_updated_at, has_no_stale_pull_requests, create_master_pipeline,
+    has_all_required_commands_in_build,
 )
 from opensource_watchman.pipelines.travis import create_travis_pipeline
 from opensource_watchman.utils.test_strategies import cases
@@ -42,6 +45,16 @@ test_master_compose_pull_requests_updated_at = cases(compose_pull_requests_updat
 test_master_has_no_stale_pull_requests = cases(has_no_stale_pull_requests)
 test_master_create_master_pipeline = cases(create_master_pipeline)
 test_master_has_support_of_python_versions = cases(has_support_of_python_versions)
+
+
+@cases(
+    has_all_required_commands_in_build,
+    kwargs={
+        'required_commands_to_run_in_build': lists(from_type(RequiredCICommandsConfig), min_size=1),
+    },
+)
+def test_has_all_required_commands_in_build(case: deal.TestCase) -> None:
+    case()
 
 
 def test_fetch_pull_request_details(github_api, detailed_pull_requests, mocked_responses):
