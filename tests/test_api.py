@@ -1,17 +1,24 @@
 import datetime
+from unittest.mock import patch
 
-import deal
 import responses
+from deal import cases
+from hypothesis import given
+from hypothesis.provisional import urls
+from hypothesis.strategies import builds, lists, text, integers, one_of
 
 from opensource_watchman.api.codeclimate_api import CodeClimateAPI
 from opensource_watchman.api.pypistats import get_pypi_downloads_stat
 from opensource_watchman.api.travis import TravisRepoAPI
 from opensource_watchman.pipelines.extended_repo_info import fetch_downloads_stat
-from opensource_watchman.pipelines.github import fetch_last_commit_date, \
-    fetch_detailed_pull_requests, fetch_ow_repo_config
+from opensource_watchman.pipelines.github import (
+    fetch_last_commit_date, fetch_detailed_pull_requests,
+    fetch_ow_repo_config, fetch_badges_urls,
+)
 from opensource_watchman.pipelines.master import analyze_is_pypi_response_ok
 
-test_travis_extract_commands_from_raw_log = deal.cases(TravisRepoAPI._extract_commands_from_raw_log)
+
+test_travis_extract_commands_from_raw_log = cases(TravisRepoAPI._extract_commands_from_raw_log)
 
 
 def test_get_pypi_stats(mocked_responses):
@@ -92,3 +99,21 @@ def test_analyze_is_pypi_response_ok(mocked_responses, github_pipeline_result):
         'https://pypi.org/project/test/',
     ])
     assert analyze_is_pypi_response_ok('test', github_pipeline_result)
+
+
+@given(
+    builds(
+        lambda d: ' '.join(d),
+        lists(one_of(
+            text(),
+            urls().map(lambda u: f'![label]({u})'),
+        )),
+    ),
+    integers(),
+)
+def test_fetch_badges_urls(sample_readme_text, height):
+    with patch(
+        'opensource_watchman.pipelines.github.get_image_height_in_pixels',
+        return_value=height,
+    ):
+        fetch_badges_urls(sample_readme_text)

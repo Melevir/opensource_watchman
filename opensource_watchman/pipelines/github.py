@@ -112,9 +112,10 @@ def fetch_ow_repo_config(api: GithubRepoAPI, config_file_name: str, config_secti
     return config
 
 
+@deal.post(lambda r: all(u.startswith('http') for u in r))
 def fetch_badges_urls(readme_content: str):
     if not readme_content:
-        return {'badges_urls': []}
+        return []
     image_urls = re.findall(r'(?:!\[.*?\]\((.*?)\))', readme_content)
     max_badge_height = 60
     badges_urls = []
