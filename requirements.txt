@@ -1,7 +1,7 @@
 click==7.1.2
 requests==2.23.0
 Jinja2==2.11.3
-pillow==7.1.2
+pillow==8.3.2
 colored==1.4.2
 fn-graph==0.14.2
 deal==4.5.0
